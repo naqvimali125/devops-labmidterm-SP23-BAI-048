@@ -10,7 +10,7 @@ pipeline {
 
     environment {
         STUDENT_ID = 'SP23-BAI-048'
-        IMAGE      = 'midterm-api:latest'
+        IMAGE      = 'naqviali125/midterm-api:latest'
         CONTAINER  = 'midterm_api'
     }
 
@@ -57,6 +57,18 @@ pipeline {
                 docker logs --tail 30 $CONTAINER
                 exit 1
                 '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                        sh 'echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin'
+                        sh 'docker push $IMAGE'
+                        sh 'docker logout || true'
+                    }
+                }
             }
         }
 
